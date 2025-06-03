@@ -1,0 +1,29 @@
+# Maven
+/target/
+/pom.xml.tag
+/pom.xml.releaseBackup
+/pom.xml.versionsBackup
+/logs/
+/dependency-reduced-pom.xml
+/buildNumber.properties
+
+# Eclipse
+.project
+.classpath
+.settings/
+
+# IntelliJ IDEA
+.idea/
+*.iml
+*.iws
+out/
+
+# Otros
+*.log
+*.tmp
+*.bak
+*.swp
+.DS_Store
+
+# Archivos de configuración
+src/main/resources/config.properties
