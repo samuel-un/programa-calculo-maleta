@@ -1,4 +1,4 @@
-# 🧳 Luggage Finder by Dimensions
+# 🧳 Suitcase finder by dimensions
 
 A simple Java Swing application to search for the **smallest suitable luggage** based on user-entered dimensions. Perfect for workshops, warehouses, or logistics operations that need to quickly identify fitting luggage from a catalog.
 
