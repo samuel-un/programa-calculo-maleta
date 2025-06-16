@@ -202,52 +202,90 @@ public class VentanaPrincipal extends JFrame {
 			return;
 		}
 
-		// Convertir piezas a objetos Pieza
 		List<Pieza> piezasConvertidas = piezas.stream()
 				.map(p -> new Pieza(p[0], p[1], p[2]))
 				.collect(Collectors.toList());
 
 		PackingService packingService = new PackingService();
 
-		Maleta maletaElegida = null;
-		double mejorVolumen = Double.MAX_VALUE;
-		List<PackingService.Cubo> mejorDistribucion = null;
+		Maleta maletaElegida2D = null;
+		List<PackingService.Cubo> distribucion2D = null;
+		double mejorVolumen2D = Double.MAX_VALUE;
 
 		for (Maleta m : maletas) {
-			if (packingService.puedeEmpaquetar(piezasConvertidas, m)) {
-				List<PackingService.Cubo> distribucion = packingService.obtenerDistribucion(piezasConvertidas, m);
-				if (distribucion != null && m.getVolumen() < mejorVolumen) {
-					mejorVolumen = m.getVolumen();
-					maletaElegida = m;
-					mejorDistribucion = distribucion;
+			if (packingService.puedeEmpaquetarPlanoXY(piezasConvertidas, m)) {
+				List<PackingService.Cubo> dist = packingService.obtenerDistribucionPlanoXY(piezasConvertidas, m);
+				if (dist != null && m.getVolumen() < mejorVolumen2D) {
+					mejorVolumen2D = m.getVolumen();
+					maletaElegida2D = m;
+					distribucion2D = dist;
 				}
 			}
 		}
 
-		if (maletaElegida == null) {
-			resultado.setText("No se encontró ninguna maleta que pueda empaquetar las piezas.");
-		} else {
-			StringBuilder sb = new StringBuilder();
-			sb.append("Maleta más optima para las piezas introducidas:\n");
-			sb.append("Referencia: ").append(maletaElegida.getRefMaleta()).append("\n");
-			sb.append("Proveedor: ").append(maletaElegida.getProveedor()).append("\n\n");
-			sb.append("Medidas de la maleta:\n");
-			sb.append("Largo: ").append(String.format("%.1f", maletaElegida.getLargo())).append(" cm | ");
-			sb.append("Ancho: ").append(String.format("%.1f", maletaElegida.getAncho())).append(" cm | ");
-			sb.append("Grueso: ").append(String.format("%.1f", maletaElegida.getGrueso())).append(" cm\n\n");
+		Maleta maletaElegida3D = null;
+		List<PackingService.Cubo> distribucion3D = null;
+		double mejorVolumen3D = Double.MAX_VALUE;
 
-			sb.append("Distribución de cómo se deben meter las piezas en la maleta:\n");
-			for (int i = 0; i < mejorDistribucion.size(); i++) {
-				PackingService.Cubo c = mejorDistribucion.get(i);
-				sb.append("Pieza ").append(i + 1).append(": ");
-				sb.append(String.format("Posición (x=%.1f cm, y=%.1f cm, z=%.1f cm), ", c.x, c.y, c.z));
-				sb.append(String.format("Dimensiones (Largo=%.1f cm, Ancho=%.1f cm, Grueso=%.1f cm)", c.largo, c.ancho,
-						c.grueso));
-				sb.append("\n");
+		for (Maleta m : maletas) {
+			if (packingService.puedeEmpaquetar(piezasConvertidas, m)) {
+				List<PackingService.Cubo> dist = packingService.obtenerDistribucion(piezasConvertidas, m);
+				if (dist != null && m.getVolumen() < mejorVolumen3D) {
+					mejorVolumen3D = m.getVolumen();
+					maletaElegida3D = m;
+					distribucion3D = dist;
+				}
 			}
-
-			resultado.setText(sb.toString());
 		}
+
+		StringBuilder sb = new StringBuilder();
+
+		if (maletaElegida2D != null) {
+			sb.append("Opción 1. Maleta óptima para una sola capa: \n");
+			sb.append("Referencia: ").append(maletaElegida2D.getRefMaleta()).append("\n");
+			sb.append("Proveedor: ").append(maletaElegida2D.getProveedor()).append("\n");
+			sb.append(String.format("Dimensiones de la maleta: Largo=%.1f cm | Ancho=%.1f cm | Grueso=%.1f cm\n\n",
+					maletaElegida2D.getLargo(), maletaElegida2D.getAncho(), maletaElegida2D.getGrueso()));
+		} else {
+			sb.append("No se encontró ninguna maleta que pueda empaquetar las piezas en una sola capa.\n\n");
+		}
+
+		if (maletaElegida3D != null) {
+			sb.append("Opción 2. Maleta óptima para múltiples capas (3D): \n");
+			sb.append("Referencia: ").append(maletaElegida3D.getRefMaleta()).append("\n");
+			sb.append("Proveedor: ").append(maletaElegida3D.getProveedor()).append("\n");
+			sb.append(String.format("Dimensiones de la maleta: Largo=%.1f cm | Ancho=%.1f cm | Grueso=%.1f cm\n\n",
+					maletaElegida3D.getLargo(), maletaElegida3D.getAncho(), maletaElegida3D.getGrueso()));
+		} else {
+			sb.append("No se encontró ninguna maleta que pueda empaquetar las piezas en múltiples capas (3D).\n\n");
+		}
+
+		sb.append("----------------------------------------\n\n");
+
+		if (maletaElegida2D != null && distribucion2D != null) {
+			sb.append("Distribución de las piezas para la Opción 1:\n");
+			for (int i = 0; i < distribucion2D.size(); i++) {
+				PackingService.Cubo c = distribucion2D.get(i);
+				sb.append(String.format(
+						"Pieza %d: Posición (x=%.1f cm, y=%.1f cm, z=%.1f cm), Dimensiones (Largo=%.1f cm, Ancho=%.1f cm, Grueso=%.1f cm)\n",
+						i + 1, c.x, c.y, c.z, c.largo, c.ancho, c.grueso));
+			}
+			sb.append("\n");
+		}
+
+		if (maletaElegida3D != null && distribucion3D != null) {
+			sb.append("Distribución de las piezas para la Opción 2 (3D):\n");
+			for (int i = 0; i < distribucion3D.size(); i++) {
+				PackingService.Cubo c = distribucion3D.get(i);
+				sb.append(String.format(
+						"Pieza %d: Posición (x=%.1f cm, y=%.1f cm, z=%.1f cm), Dimensiones (Largo=%.1f cm, Ancho=%.1f cm, Grueso=%.1f cm)\n",
+						i + 1, c.x, c.y, c.z, c.largo, c.ancho, c.grueso));
+			}
+		}
+
+		resultado.setText(sb.toString());
+		resultado.setCaretPosition(0);
+
 	}
 
 	private void seleccionarArchivoExcel() {

@@ -10,7 +10,7 @@ import java.util.List;
 
 public class PackingService {
 
-	private static final double STEP = 0.5; // paso reducido para mejor ajuste
+	private static final double STEP = 0.5;
 
 	public static class Cubo {
 		public double x, y, z;
@@ -60,6 +60,14 @@ public class PackingService {
 	}
 
 	public boolean puedeEmpaquetar(List<Pieza> piezas, Maleta maleta) {
+		return obtenerDistribucion(piezas, maleta) != null;
+	}
+
+	public boolean puedeEmpaquetarPlanoXY(List<Pieza> piezas, Maleta maleta) {
+		return obtenerDistribucionPlanoXY(piezas, maleta) != null;
+	}
+
+	public List<Cubo> obtenerDistribucion(List<Pieza> piezas, Maleta maleta) {
 		List<Cubo> colocadas = new ArrayList<>();
 		ordenarPiezasPorVolumen(piezas);
 
@@ -70,6 +78,10 @@ public class PackingService {
 				double largo = dims[0];
 				double ancho = dims[1];
 				double grueso = dims[2];
+
+				if (largo > maleta.getLargo() || ancho > maleta.getAncho() || grueso > maleta.getGrueso()) {
+					continue;
+				}
 
 				for (double x = 0; x <= maleta.getLargo() - largo; x += STEP) {
 					for (double y = 0; y <= maleta.getAncho() - ancho; y += STEP) {
@@ -102,14 +114,14 @@ public class PackingService {
 			}
 
 			if (!colocada) {
-				return false;
+				return null;
 			}
 		}
 
-		return true;
+		return colocadas;
 	}
 
-	public List<Cubo> obtenerDistribucion(List<Pieza> piezas, Maleta maleta) {
+	public List<Cubo> obtenerDistribucionPlanoXY(List<Pieza> piezas, Maleta maleta) {
 		List<Cubo> colocadas = new ArrayList<>();
 		ordenarPiezasPorVolumen(piezas);
 
@@ -121,27 +133,32 @@ public class PackingService {
 				double ancho = dims[1];
 				double grueso = dims[2];
 
+				if (largo > maleta.getLargo() || ancho > maleta.getAncho() || grueso > maleta.getGrueso()) {
+					continue;
+				}
+
+				double z = 0;
+
+				Cubo nueva = new Cubo(0, 0, z, largo, ancho, grueso);
+
 				for (double x = 0; x <= maleta.getLargo() - largo; x += STEP) {
 					for (double y = 0; y <= maleta.getAncho() - ancho; y += STEP) {
-						for (double z = 0; z <= maleta.getGrueso() - grueso; z += STEP) {
-							Cubo nueva = new Cubo(x, y, z, largo, ancho, grueso);
+						nueva.x = x;
+						nueva.y = y;
 
-							boolean solapa = false;
-							for (Cubo c : colocadas) {
-								if (nueva.intersecta(c)) {
-									solapa = true;
-									break;
-								}
-							}
-
-							if (!solapa) {
-								colocadas.add(nueva);
-								colocada = true;
+						boolean solapa = false;
+						for (Cubo c : colocadas) {
+							if (nueva.intersecta(c)) {
+								solapa = true;
 								break;
 							}
 						}
-						if (colocada)
+
+						if (!solapa) {
+							colocadas.add(new Cubo(x, y, z, largo, ancho, grueso));
+							colocada = true;
 							break;
+						}
 					}
 					if (colocada)
 						break;

@@ -38,7 +38,7 @@ public class ExcelService {
 
 				if (columnas.size() >= 5) {
 					encabezadosEncontrados = true;
-					break; // Ya tenemos los encabezados
+					break;
 				}
 			}
 
