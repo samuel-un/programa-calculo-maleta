@@ -28,8 +28,8 @@ public class ExcelService {
 						columnas.put("largo", celda.getColumnIndex());
 					else if (valor.contains("ancho"))
 						columnas.put("ancho", celda.getColumnIndex());
-					else if (valor.contains("alto"))
-						columnas.put("alto", celda.getColumnIndex());
+					else if (valor.contains("grueso"))
+						columnas.put("grueso", celda.getColumnIndex());
 					else if (valor.contains("ref"))
 						columnas.put("ref", celda.getColumnIndex());
 					else if (valor.contains("proveedor"))
@@ -52,10 +52,10 @@ public class ExcelService {
 				try {
 					double largo = fila.getCell(columnas.get("largo")).getNumericCellValue();
 					double ancho = fila.getCell(columnas.get("ancho")).getNumericCellValue();
-					double alto = fila.getCell(columnas.get("alto")).getNumericCellValue();
+					double grueso = fila.getCell(columnas.get("grueso")).getNumericCellValue();
 					String ref = fila.getCell(columnas.get("ref")).getStringCellValue();
 					String prov = fila.getCell(columnas.get("proveedor")).getStringCellValue();
-					maletas.add(new Maleta(largo, ancho, alto, ref, prov));
+					maletas.add(new Maleta(largo, ancho, grueso, ref, prov));
 				} catch (Exception ignored) {
 				}
 			}

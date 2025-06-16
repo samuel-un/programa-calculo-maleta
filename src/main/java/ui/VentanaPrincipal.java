@@ -12,6 +12,9 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.stream.Collectors;
 
+import service.PackingService;
+import model.Pieza;
+
 public class VentanaPrincipal extends JFrame {
 	private final JTextField campoLargo = new JTextField(10);
 	private final JTextField campoAncho = new JTextField(10);
@@ -199,58 +202,51 @@ public class VentanaPrincipal extends JFrame {
 			return;
 		}
 
-		int n = piezas.size();
-		int filas = (int) Math.sqrt(n);
-		int columnas = (int) Math.ceil((double) n / filas);
+		// Convertir piezas a objetos Pieza
+		List<Pieza> piezasConvertidas = piezas.stream()
+				.map(p -> new Pieza(p[0], p[1], p[2]))
+				.collect(Collectors.toList());
 
-		double[][] matriz = new double[filas][columnas * 3];
-
-		for (int i = 0; i < n; i++) {
-			int fila = i / columnas;
-			int col = i % columnas;
-			matriz[fila][col * 3] = piezas.get(i)[0];
-			matriz[fila][col * 3 + 1] = piezas.get(i)[1];
-			matriz[fila][col * 3 + 2] = piezas.get(i)[2];
-		}
-
-		double largoTemp = 0, anchoTemp = 0, gruesoTemp = 0;
-
-		for (int f = 0; f < filas; f++) {
-			double largoFila = 0, anchoFila = 0;
-			for (int c = 0; c < columnas; c++) {
-				int idx = c * 3;
-				if (matriz[f][idx] > largoFila)
-					largoFila = matriz[f][idx];
-				anchoFila += matriz[f][idx + 1];
-				gruesoTemp += matriz[f][idx + 2];
-			}
-			largoTemp += largoFila;
-			if (anchoTemp < anchoFila)
-				anchoTemp = anchoFila;
-		}
-
-		largoTemp += config.getSumaLargo();
-		anchoTemp += config.getSumaAncho();
-		gruesoTemp += config.getSumaGrueso();
+		PackingService packingService = new PackingService();
 
 		Maleta maletaElegida = null;
 		double mejorVolumen = Double.MAX_VALUE;
+		List<PackingService.Cubo> mejorDistribucion = null;
 
 		for (Maleta m : maletas) {
-			if (m.getLargo() >= largoTemp && m.getAncho() >= anchoTemp && m.getAlto() >= gruesoTemp) {
-				if (m.getVolumen() < mejorVolumen) {
+			if (packingService.puedeEmpaquetar(piezasConvertidas, m)) {
+				List<PackingService.Cubo> distribucion = packingService.obtenerDistribucion(piezasConvertidas, m);
+				if (distribucion != null && m.getVolumen() < mejorVolumen) {
 					mejorVolumen = m.getVolumen();
 					maletaElegida = m;
+					mejorDistribucion = distribucion;
 				}
 			}
 		}
 
 		if (maletaElegida == null) {
-			resultado.setText("No se encontró ninguna maleta que se ajuste a las medidas totales con sumas.");
+			resultado.setText("No se encontró ninguna maleta que pueda empaquetar las piezas.");
 		} else {
-			resultado.setText("Maleta elegida:\n" + maletaElegida.toString() +
-					"\n\nMedidas totales con sumas:\n" +
-					String.format("Largo: %.2f cm\nAncho: %.2f cm\nGrueso: %.2f cm", largoTemp, anchoTemp, gruesoTemp));
+			StringBuilder sb = new StringBuilder();
+			sb.append("Maleta más optima para las piezas introducidas:\n");
+			sb.append("Referencia: ").append(maletaElegida.getRefMaleta()).append("\n");
+			sb.append("Proveedor: ").append(maletaElegida.getProveedor()).append("\n\n");
+			sb.append("Medidas de la maleta:\n");
+			sb.append("Largo: ").append(String.format("%.1f", maletaElegida.getLargo())).append(" cm | ");
+			sb.append("Ancho: ").append(String.format("%.1f", maletaElegida.getAncho())).append(" cm | ");
+			sb.append("Grueso: ").append(String.format("%.1f", maletaElegida.getGrueso())).append(" cm\n\n");
+
+			sb.append("Distribución de cómo se deben meter las piezas en la maleta:\n");
+			for (int i = 0; i < mejorDistribucion.size(); i++) {
+				PackingService.Cubo c = mejorDistribucion.get(i);
+				sb.append("Pieza ").append(i + 1).append(": ");
+				sb.append(String.format("Posición (x=%.1f cm, y=%.1f cm, z=%.1f cm), ", c.x, c.y, c.z));
+				sb.append(String.format("Dimensiones (Largo=%.1f cm, Ancho=%.1f cm, Grueso=%.1f cm)", c.largo, c.ancho,
+						c.grueso));
+				sb.append("\n");
+			}
+
+			resultado.setText(sb.toString());
 		}
 	}
 
